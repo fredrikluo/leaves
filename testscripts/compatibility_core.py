@@ -277,8 +277,8 @@ class Case(abc.ABC):
                     fout.write(f"""
 module main
 
-require "github.com/dmitryikh/leaves" v0.0.0
-replace "github.com/dmitryikh/leaves" v0.0.0 => "{self.leaves_path}"
+require "github.com/fredrikluo/leaves" v0.0.0
+replace "github.com/fredrikluo/leaves" v0.0.0 => "{self.leaves_path}"
 """)
 
             self.logger.info(f'Build {script_filename}')
