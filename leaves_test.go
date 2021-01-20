@@ -68,7 +68,7 @@ func InnerTestLGMSLTR(t *testing.T, nThreads int) {
 
 	// do predictions
 	predictions := make([]float64, csr.Rows())
-	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads, false)
+	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads)
 
 	// compare results
 	if err := util.AlmostEqualFloat64Slices(truePredictions.Values, predictions, 1e-5); err != nil {
@@ -173,9 +173,9 @@ func InnerTestHiggs(t *testing.T, model *Ensemble, nThreads int, isDense bool, t
 
 	predictions := make([]float64, nRows)
 	if isDense {
-		model.PredictDense(dense.Values, dense.Rows, dense.Cols, predictions, 0, nThreads, false)
+		model.PredictDense(dense.Values, dense.Rows, dense.Cols, predictions, 0, nThreads)
 	} else {
-		model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads, false)
+		model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads)
 	}
 	// compare results. Count number of mismatched values beacase of floating point
 	// comparisons problems: fval < thresholds.
@@ -193,7 +193,7 @@ func InnerTestHiggs(t *testing.T, model *Ensemble, nThreads int, isDense bool, t
 		// check single prediction
 		singleIdx := 100
 		fvals := dense.Values[singleIdx*dense.Cols : (singleIdx+1)*dense.Cols]
-		prediction, _ := model.PredictSingle(fvals, 0, false)
+		prediction := model.PredictSingle(fvals, 0)
 		if err := util.AlmostEqualFloat64Slices([]float64{truePredictions.Values[singleIdx]}, []float64{prediction}, tolerance); err != nil {
 			t.Errorf("different PredictSingle prediction: %s", err.Error())
 		}
@@ -202,7 +202,7 @@ func InnerTestHiggs(t *testing.T, model *Ensemble, nThreads int, isDense bool, t
 		singleIdx = 200
 		fvals = dense.Values[singleIdx*dense.Cols : (singleIdx+1)*dense.Cols]
 		predictions := make([]float64, 1)
-		_, err := model.Predict(fvals, 0, predictions, false)
+		err := model.Predict(fvals, 0, predictions)
 		if err != nil {
 			t.Errorf("error while call model.Predict: %s", err.Error())
 		}
@@ -240,7 +240,7 @@ func InnerBenchmarkLGMSLTR(b *testing.B, nThreads int) {
 	b.ResetTimer()
 	predictions := make([]float64, csr.Rows())
 	for i := 0; i < b.N; i++ {
-		model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads, false)
+		model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads)
 	}
 }
 
@@ -328,7 +328,7 @@ func InnerTestXGAgaricus(t *testing.T, nThreads int) {
 
 	// do predictions with transformation inside
 	predictions := make([]float64, csr.Rows()*model.NOutputGroups())
-	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads, false)
+	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads)
 	// compare results
 	if err := util.AlmostEqualFloat64Slices(truePredictions.Values, predictions, 1e-7); err != nil {
 		t.Fatalf("different predictions: %s", err.Error())
@@ -336,7 +336,7 @@ func InnerTestXGAgaricus(t *testing.T, nThreads int) {
 
 	// do raw predictions with transformation outside
 	rawModel := model.EnsembleWithRawPredictions()
-	rawModel.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads, false)
+	rawModel.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads)
 	util.SigmoidFloat64SliceInplace(predictions)
 	// compare results
 	if err := util.AlmostEqualFloat64Slices(truePredictions.Values, predictions, 1e-7); err != nil {
@@ -383,7 +383,7 @@ func InnerTestXGBLinAgaricus(t *testing.T, loadTransformation bool, nThreads int
 
 	// do predictions
 	predictions := make([]float64, csr.Rows())
-	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads, false)
+	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads)
 	// compare results
 	if err := util.AlmostEqualFloat64Slices(truePredictions.Values, predictions, 1e-5); err != nil {
 		t.Fatalf("different predictions: %s", err.Error())
@@ -414,7 +414,7 @@ func InnerTestXGBLinRawAgaricus(t *testing.T, nThreads int) {
 
 	// do predictions
 	predictions := make([]float64, csr.Rows())
-	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads, false)
+	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads)
 	// compare results
 	if err := util.AlmostEqualFloat64Slices(truePredictions.Values, predictions, 1e-5); err != nil {
 		t.Fatalf("different predictions: %s", err.Error())
@@ -480,11 +480,11 @@ func InnerBenchmarkHiggs(b *testing.B, model *Ensemble, nThreads int, isDense bo
 	predictions := make([]float64, nRows)
 	if isDense {
 		for i := 0; i < b.N; i++ {
-			model.PredictDense(dense.Values, dense.Rows, dense.Cols, predictions, 0, nThreads, false)
+			model.PredictDense(dense.Values, dense.Rows, dense.Cols, predictions, 0, nThreads)
 		}
 	} else {
 		for i := 0; i < b.N; i++ {
-			model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads, false)
+			model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads)
 		}
 	}
 }
@@ -534,7 +534,7 @@ func InnerTestLGMulticlass(t *testing.T, loadTransformation bool, nThreads int) 
 
 	// do predictions
 	predictions := make([]float64, dense.Rows*model.NOutputGroups())
-	model.PredictDense(dense.Values, dense.Rows, dense.Cols, predictions, 0, nThreads, false)
+	model.PredictDense(dense.Values, dense.Rows, dense.Cols, predictions, 0, nThreads)
 	// compare results
 	const tolerance = 1e-7
 	if err := util.AlmostEqualFloat64Slices(truePredictions.Values, predictions, tolerance); err != nil {
@@ -545,7 +545,7 @@ func InnerTestLGMulticlass(t *testing.T, loadTransformation bool, nThreads int) 
 	singleIdx := 200
 	fvals := dense.Values[singleIdx*dense.Cols : (singleIdx+1)*dense.Cols]
 	predictions = make([]float64, model.NOutputGroups())
-	_, err = model.Predict(fvals, 0, predictions, false)
+	err = model.Predict(fvals, 0, predictions)
 	if err != nil {
 		t.Errorf("error while call model.Predict: %s", err.Error())
 	}
@@ -595,7 +595,7 @@ func InnerTestXGDermatology(t *testing.T, nThreads int) {
 
 	// do predictions
 	predictions := make([]float64, csr.Rows()*model.NOutputGroups())
-	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads, false)
+	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, nThreads)
 	// compare results
 	const tolerance = 1e-6
 	if err := util.AlmostEqualFloat64Slices(truePredictions.Values, predictions, tolerance); err != nil {
@@ -627,7 +627,7 @@ func TestSKGradientBoostingClassifier(t *testing.T) {
 
 	// do predictions
 	predictions := make([]float64, csr.Rows()*model.NOutputGroups())
-	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, 1, false)
+	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, 1)
 	// compare results
 	const tolerance = 1e-6
 	if err := util.AlmostEqualFloat64Slices(truePredictions.Values, predictions, tolerance); err != nil {
@@ -661,7 +661,7 @@ func TestSKIris(t *testing.T) {
 
 	// do predictions
 	predictions := make([]float64, csr.Rows()*model.NOutputGroups())
-	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, 1, false)
+	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, 1)
 	// compare results
 	const tolerance = 1e-6
 	// compare results. Count number of mismatched values beacase of floating point
@@ -708,7 +708,7 @@ func TestLGRandomForestIris(t *testing.T) {
 	}
 	// do predictions
 	predictions := make([]float64, csr.Rows()*model.NOutputGroups())
-	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, 1, false)
+	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 0, 1)
 	// compare results
 	const tolerance = 1e-6
 	if err := util.AlmostEqualFloat64Slices(truePredictions.Values, predictions, tolerance); err != nil {
@@ -750,7 +750,7 @@ func TestXGDARTAgaricus(t *testing.T) {
 
 	// do predictions
 	predictions := make([]float64, csr.Rows())
-	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 10, 1, false)
+	model.PredictCSR(csr.RowHeaders, csr.ColIndexes, csr.Values, predictions, 10, 1)
 	// compare results
 	if err := util.AlmostEqualFloat64Slices(truePredictions.Values, predictions, 1e-5); err != nil {
 		t.Fatalf("different predictions: %s", err.Error())
@@ -783,7 +783,7 @@ func TestLGDARTBreastCancer(t *testing.T) {
 
 	// do predictions
 	predictions := make([]float64, test.Rows*model.NOutputGroups())
-	_, err = model.PredictDense(test.Values, test.Rows, test.Cols, predictions, 0, 1, false)
+	err = model.PredictDense(test.Values, test.Rows, test.Cols, predictions, 0, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -822,7 +822,7 @@ func TestLGKDDCup99(t *testing.T) {
 
 	// do predictions
 	predictions := make([]float64, test.Rows*model.NOutputGroups())
-	_, err = model.PredictDense(test.Values, test.Rows, test.Cols, predictions, 0, 1, false)
+	err = model.PredictDense(test.Values, test.Rows, test.Cols, predictions, 0, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -860,7 +860,7 @@ func InnerBenchmarkLGKDDCup99(b *testing.B, nThreads int) {
 	b.ResetTimer()
 	predictions := make([]float64, test.Rows*model.NOutputGroups())
 	for i := 0; i < b.N; i++ {
-		model.PredictDense(test.Values, test.Rows, test.Cols, predictions, 0, nThreads, false)
+		model.PredictDense(test.Values, test.Rows, test.Cols, predictions, 0, nThreads)
 	}
 }
 
@@ -895,7 +895,7 @@ func TestLGJsonBreastCancer(t *testing.T) {
 
 	// do predictions
 	predictions := make([]float64, test.Rows*model.NOutputGroups())
-	_, err = model.PredictDense(test.Values, test.Rows, test.Cols, predictions, 0, 1, false)
+	err = model.PredictDense(test.Values, test.Rows, test.Cols, predictions, 0, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
